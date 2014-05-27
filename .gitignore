@@ -1,3 +1,4 @@
-*.png
-*.pdf
-poster/
+*.aux
+*.bbl
+*.blg
+*.log
