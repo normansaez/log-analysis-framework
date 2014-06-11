@@ -60,21 +60,18 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 \begin{abstract}
-ALMA Software is a complex distributed system installed in more than one
+ALMA Software is a complex distributed system deployed roughky in more than one
 hundred of computers, which interacts with more than one thousand of hardware
-device components. A normal observation follows a flow that interacts with
-almost that entire infrastructure in a coordinated way. The Software Operation
-Support team (SOFTOPS) comprises specialized engineers, which analyze the generated
-software log messages in daily basis to detect bugs, failures and predict
-eventual failures. These log message can reach up to 30 GB per day. We describe
-a decoupled and non-intrusive log analysis framework and implemented tools to
-identify well known problems, measure times taken by specific tasks and detect
-abnormal behaviors in the system in order to alert the engineers to take
-corrective actions. The main advantage of this approach among others is that
-the analysis itself does not interfere with the performance of the production
-system, allowing to run multiple analyzers in parallel. In this paper we'll
-describe the selected framework and show the result of some of the implemented
-tools.
+device components. A standar observation workflow interacts with the
+distributed system, ALMASW, in a synchronized way. The Software Operation
+Support team (SOFTOPS) comprises specialized computer science engineers, in which the team analyze dayly basis the generated log entries in order detect bugs, system failures and possibly predict eventual malfunctioning. 
+
+A quick benchmark result, showed? that the log entries generated can reach, roughly, up to 30 GB per day and system instance running. It is proposed a decoupled and non-intrusive log analysis framework by using in-house developed tools and third-party library in order to identify well known problems, benchmaking, time profiling and
+abnormal system behavior recongnition focused to alert the engineers to take corrective and preventive actions.
+
+The key advantage of the proposed approach over other solutions is that the the analysis itself does not interfere with the system resources in a production environment, allowing to execute concurrent log analyzer tools. 
+
+In this paper, it is described the selected componentes of the framework, as well present the analized data.
 \end{abstract}
 
 %>>>> Include a list of keywords after the abstract 
