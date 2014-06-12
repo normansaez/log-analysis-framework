@@ -25,6 +25,8 @@
 \usepackage{epstopdf}
 \usepackage{url}
 \usepackage{amsmath}
+\usepackage{enumerate}
+
 \title{Unveiling ALMA software behavior using a decoupled log analysis framework}
 
 %>>>> The author is responsible for formatting the 
@@ -34,12 +36,17 @@
 %  can be indicated with a superscript in italics, 
 %  which is easily obtained with \supit{}.
 
-\author{Juan Pablo Gil$\supit{a}^{*}$, Alexis Tejeda\supit{b}, Tzu-Chiang Shen\supit{a}, Norman S\'aez\supit{a}
+\author{Juan Pablo Gil$\supit{a}^{*}$, 
+Alexis Tejeda\supit{b}, 
+Tzu-Chiang Shen\supit{a}, 
+Norman S\'aez\supit{a}
 \skiplinehalf
-\supit{a}Atacama Large Millimeter/submillimeter Array, Av. Alonso de C\'ordova 3107, Santiago, Chile\\
-\supit{b}National Radio Astronomy Observatory (NRAO), Socorro, New Mexico, USA\\ $*$jgil@alma.cl
+\supit{a}JAO ALMA Observatory\\
+\supit{b}National Radio Astronomy Observatory\\ $*$jgil@alma.cl
 %\supit{b}Affiliation2, Address, City, Country
 }
+
+%# atejeda : Atacama Large Millimeter/submillimeter Array, shouldn't be JAO ALMA Observatory ?
 
 %>>>> Further information about the authors, other than their 
 %  institution and addresses, should be included as a footnote, 
@@ -60,33 +67,45 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 \begin{abstract}
-ALMA Software is a complex distributed system deployed roughky in more than one
+ALMA Software is a complex distributed system deployed roughly in more than one
 hundred of computers, which interacts with more than one thousand of hardware
-device components. A standar observation workflow interacts with the
+device components. A standard observation workflow interacts with the
 distributed system, ALMASW, in a synchronized way. The Software Operation
-Support team (SOFTOPS) comprises specialized computer science engineers, in which the team analyze dayly basis the generated log entries in order detect bugs, system failures and possibly predict eventual malfunctioning. 
+Support team (SOFTOPS) comprises specialized software engineers, in which the 
+team analyze dayly basis the generated log entries in order detect bugs, system 
+failures and possibly predict eventual malfunctioning. 
 
-A quick benchmark result, showed? that the log entries generated can reach, roughly, up to 30 GB per day and system instance running. It is proposed a decoupled and non-intrusive log analysis framework by using in-house developed tools and third-party library in order to identify well known problems, benchmaking, time profiling and
-abnormal system behavior recongnition focused to alert the engineers to take corrective and preventive actions.
+A quick benchmark result, pointed that the log entries generated can reach, 
+roughly, up to 30 GB per day and system instance running. It is proposed a 
+decoupled and non-intrusive log analysis framework by using in-house developed 
+tools and third-party library in order to identify well known problems, 
+benchmaking, time profiling and
+abnormal system behavior recongnition focused to alert the engineers to take 
+corrective and preventive actions.
 
-The key advantage of the proposed approach over other solutions is that the the analysis itself does not interfere with the system resources in a production environment, allowing to execute concurrent log analyzer tools. 
+The key advantage of the proposed approach over other solutions is that the 
+analysis itself does not interfere with the system resources in a production 
+environment, allowing to execute concurrent log analyzer tools. 
 
-In this paper, it is described the selected componentes of the framework, as well present the analized data.
+In this paper, it is described the selected componentes of the framework, as 
+well present the analized data.
 \end{abstract}
 
 %>>>> Include a list of keywords after the abstract 
 
 \keywords{bug, detection, log, analyzer}
 
+\renewcommand{\thefootnote}{\arabic{footnote}}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{INTRODUCTION}\label{sec:intro}  % \label{} allows reference to this section
 The Atacama Large Millimeter/sub-millimeter Array (ALMA) is currently the
 world's largest astronomical facility, built in partnership with Europe,
-    North America and East Asia in cooperation with the Republic of Chile. Its
-    frequency coverage has a range from the mm/submm windows up to 1 THz. The
-    observatory is placed in Atacama Desert at an altitude of 5000 meters above
-    sea level, and it is controlled from the operations support facility at
-    2.900 meters.
+North America and East Asia in cooperation with the Republic of Chile. Its
+frequency coverage has a range from the mm/submm windows up to 1 THz. The
+observatory is placed in Atacama Desert at an altitude of 5000 meters above
+sea level, and it is controlled from the operations support facility at
+2.900 meters.
 
 The software that controls the overall operations of the array, data processing
 and later storage is based on top of ALMA Common Software (ACS), which runs in
@@ -94,23 +113,23 @@ a highly distributed environment including hardware and computers. The logs
 generated by the different components of software contains valuable information
 such data rates, uncommon behaviour of hardware, times involved in the
 different stages of observations, etc. However, due to the high amount of those
-logs most of that information remains hidden and are useless in practical terms,
+logs, most of that information remains hidden and are useless in practical terms,
 except for a small set which is used to do daily troubleshooting activities.
 
-A dedicated team of engineers, SOFTOPS, provides frontline
+A dedicated team of software engineers, SOFTOPS, provides frontline
 software support for the ALMA software among other activities\cite{gonzalez2010first}.
 The usual workflow is to receive problem reports and determine the root cause of
-the failures. This task is done by manually analyzing the logs around the time of
-the event, and sometimes developing tools to extract specific information from
+the failures. This task is done manually by analyzing the logs around the time of
+the event and sometimes developing tools to extract specific information from
 the whole set of logs in order to diagnose one specific problem. This approach
-works well as reactive measures to solve problems, but don´t makes full usage
-of most of the information inside the logs. Also, the time spent in find the
-right logs among hundred or thousands of lines can be in the order of hours.
+works well as a reactive measure to solve problems, but do not makes full usage
+of most of the information contained the logs. As well, the time spent finding the
+right logs among hundred or thousands of lines, can be in order of hours.
 
-In this paper we describe generalities of ALMA software and its log system, and
-describe a tool under development to make better usage of the information
+In this paper it is described generalities of ALMA software and its log system and
+describe a on-going in-house development to make a better usage of the information
 already being stored in the logs through automated tools that do not interfere
-with the normal operation of the array.
+with the normal operation of an array.
 
 \section{ALMA Software and Logging Service}
 ALMA Common Software (ACS) is the framework used in the logical infrastructure
@@ -118,92 +137,217 @@ for ALMA operation. ACS is based on CORBA and provides low level services,
     network abstraction and common design patterns for distributed software,
     based in a component / container paradigm\cite{schwarz2004alma}.
 
-ACS deploys one dedicated notify service for the logging system that gets
-distributed over the network in a publisher-subscriber paradigm and is used
-intensively in each component. The logging service receives log entries from
-all the system and distributes them to registered clients in a centralized
+%# atejeda : reference to the notification service
+ACS by default, define a dedicated notify service\cite{notifyService} for the 
+logging system that gets
+distributed over the network based in a publish-subscribe paradigm used
+intensively by ALMASW components. The logging service receives system-wide logs 
+and distributes them to clients subscribed to the logging channel in a centralized
 way. Each log has an associated priority and timestamp, allowing filtering at
-different levels of the system. The logs consumers (clients) can access log
-entries by subscribing to the event channel of interest.
+different levels of the system. The logging channel consumers (clients) receives 
+the log entries by subscribing to the event channel of interest.
 
-A log is represented as a XML document that contains: a timestamp encoded in
-ISO 8601 with precision up to millisecond; some fields of source code
-information like file, line and/or routine; runtime context information
-including host name, thread; the priority of the log that covers from Trace (1)
-to Emergency (11); and the log message itself that is stored as CDATA\cite{avarias2010introducing}.
- 
-In ALMA production environment a dedicated set of hardware are used to run ACS
-and all the software components. There are a number of clients normally running
-during observation. The standard client used for the operators of the array is
-jLog, a JAVA application that subscribes to logging channel and shows it in a
-GUI with some basic tools to filter and search by different criteria. Another
-client redirects logs to a relational database, and also stores them in XML
-files in one of the servers in a FIFO scheme, typically keeping it at most two
-days due to space restrictions\cite{shen2012alma}.
+A log entry is represented as a XML document composed by: 
+
+{\small
+\begin{verbatim}
+<Debug 
+  TimeStamp="2014-06-02T22:40:24.682" 
+  File="acsServiceController.cpp" 
+  Line="296" Routine="" 
+  Host="10.197.52.10" 
+  Process="acsservicesdaemon" 
+  Thread="ACS Services Daemon Controller" 
+  Context="" 
+  SourceObject="ACS Services Daemon">
+  <![CDATA[
+    Imp 'Naming Service Imp' responded.
+  ]]>
+</Debug>
+\end{verbatim}
+}
+
+\begin{itemize}
+\item a timestamp encoded in ISO 8601 with precision up to millisecond
+\item some fields of source code information like file, line and/or routine
+\item runtime context information and origin, including host name, and thread
+\item the priority of the log that covers from Trace (1) to Emergency (11)
+\item the log message itself that is stored as CDATA\cite{avarias2010introducing}.
+\end{itemize}
+
+%# atejeda : meaning of jLog
+In a standard ALMA production environment, a dedicated stack of computing 
+hardware resources, is being used to operate ALMASW. 
+
+% modified but this phrase doesn't make sense at all, which clients?
+%There are, roughly,  of clients normally running during observation. 
+
+The offical logging client used by the ALMA array operators is
+jLog, a Java application that subscribes to the logging channel, receive the log 
+entry and display it in a GUI with filtering and search capabilities. 
+%% not used anymore : Another client redirects logs to a relational database, 
+Concurrently, logs entries as a XML document, being archived in a FIFO scheme 
+thirdparty service, typically, are kept up to two days due to hardware disk limitations.\cite{shen2012alma}.
 
 \section{Decoupled Log Infrastructure}
-Although the log information is available both in XML files and in the
-database, they are confined in the same environment and hardware used in
-operation. Thus the analysis cannot be performed inside those machines to not
-interfere with resources that must be fully dedicated to operate the array. For
-that reason, we developed a client that acts as a proxy between the centralized
-ALMA logging system and an external infrastructure including a database and a
-dedicated machine to perform log analysis. The idea behind this design is to
-protect as much as possible the logging channel of ALMASW to not saturate the
-connection to that channel, instead, connecting to the external queue
-
-%-------------
-   \begin{figure}[!ht]
-   \begin{center}
-   \begin{tabular}{c}
-   \includegraphics[height=8.0cm]{../img/image1-decoupled.png}
-   \end{tabular}
-   \end{center}
-   \caption[dc] 
-   { \label{fig:dc} Decoupled log infrastructure}
-   \end{figure} 
-%-------------
+Although the log information is available in XML documents, resides in the 
+operation environment. Thus the data log analysis can not be performed using the 
+same resources being used by the ALMASW, which, should be fully dedicated to 
+operate the array, memory and CPU usage can not be shared for other non-critical 
+ALMA operations. Due this, it was developed an in-house application that acts as 
+a one way enterprise integration pattern routing and transportator, subscribed 
+to the logging channel as a consumer and as a producer for thirdparty services, 
+such as message queues and database.
 
 
-The general infrastructure consists in 1) a new client that consumes logs and
-send them to 2) a queue system using RabbitMQ\cite{RabbitMQ}, a log parser through 
-LogStash\cite{LogStash} that sends the data in JSON inside MongoDB\cite{mongo}, and 3) a pool of clients that
-analyses the logs through queries to MongoDB. Two servers were deployed for
-this purpose, decoupled from production machines: Hypatia, who contains
-RabbitMQ, LogStash and MongoDB, and Ariadne that works only to run the clients
-and test different ideas.
+% atejeda: to not saturate
+The purpose of this architecture is to protect as much as possible the logging 
+channel of ALMASW to not saturate the channel with non critical software operations, 
+instead, by subscribing to a external message queue, RabbitMQ, deployed in a 
+third-party service to gather or receive the log entries throughout this stack.
+
+\begin{figure}[!ht]
+ \begin{center}
+ \begin{tabular}{c}
+ \includegraphics[height=9.0cm]{../img/DeploymentDiagram.png}
+ \end{tabular}
+ \end{center}
+ \caption[dc] 
+ { \label{fig:dc} Decoupled log architecture}
+ \end{figure}
+
+The infrastructure consists by a:
+
+\begin{itemize}
+\item Java client, subscribed to the logging channel, routing and transporting 
+the messages to a message queue system
+\item A queue message system, RabbitMQ\footnote{www.rabbitmq.com}, acting as a 
+data log producer for the
+\item A log manager, LogStash\footnote{www.logstash.com}, retrieves the data from 
+the RabbitMQ, as a subscriber and archive it in a MongoDB instance.
+\item A nosql database engine, MongoDB\footnote{www.mongodb.com}, with many collections 
+as many ALMASW instances.
+\end{itemize}
+
+Currently, services are deployed in two environments, hypatia used for data 
+management and ariadne, used for data analisys.
+
+hypatia and ariadne specs.:
+
+{\small
+\begin{verbatim}
+Linux 2.6.32-431.5.1.el6.x86_64
+Intel(R) Xeon(R) CPU E5-2650 0 @ 2.00GHz
+4 GB RAM x 4
+120 GB DISK
+\end{verbatim}
+}
 
 \section{Log Client}
-In order to deploy the log client it was used the source code of jLog,
-   inheriting only the JAVA classes to work with Notification Channel
-   subscription and some internal logic to buffer log messages to avoid the
-   slow consumer problem\cite{mora2012alma}. To this barebones it was
-   added the logic to send messages to RabbitMQ. In order to secure even more
-   the protection of the logging channel, an extra buffer protection was
-   developed, a internal memory buffer limited by the quantity of messages in
-   the queue to be sent to RabbitMQ nor also limited by the amount of memory
-   consumed by the queue, in which if the limit is raised, the application will
-   delete all messages stored in the queue.
 
-The log client is a work still under development, as ALMA is in production
-state, any addition and software change must be carefully profiled and tested
-to certify that there is no significant impact in overall performance. Initial
-tests shows that both CPU usage and memory consumption are under control and
-many Gb of logs have been already transferred to MongoDB without noticeable
-impact on production servers.
+The logging client, camel-acslog\footnote{https://github.com/atejeda/camel-acslog}, 
+is a Apache Camel component \footnote{http://camel.apache.org/} and application 
+which inherits the subscription managment classes of the jLog 
+tool\footnote{ACS/ALMA Java GUI application} for the logging 
+channel\cite{mora2012alma}. This client acts as a 
+EIP\footnote{Enterprise Integration Pattern} by applying a message routing 
+transalation, converting on the fly the XML entry to a Json 
+data\footnote{fully compatible with the whole technology stack used} and adding 
+to the Json data the origin of the log, STE hostname in order to be sent later 
+to RabbitMQ.
 
-\section{Queue and Database}
-The log client running inside the observatory production servers uses RabbitMQ
-as message broker. Next in the chain is LogStash\cite{LogStash} whose purpose is to
-convert the XML string representing a log event to JSON to be ingested by
-MongoDB. Also, LogStash add some new fields to the log instance:
+{\small
+\begin{verbatim}
+{
+  "_id" : ObjectId("5331d36c93f4348eef204d96"),
+  "origin" : "system76",
+  "uid" : "1387694615127_1",
+  "date" : NumberLong("1387694615127"),
+  "type" : "DEBUG",
+  "file" : "SpectralProcessorTask.cpp",
+  "line" : 1291,
+  "routine" : "",
+  "host" : "cob-cpn-09",
+  "process" : "CORR/CDPNode/N09/cppContainer",
+  "context" : "",
+  "thread" : "SPT_3",
+  "logMessage" : "[SPT_3] lags processing took: 3306 [us]",
+  "sourceObject" : "SPT_3",
+  "@timestamp" : "\"2013-12-21T23:43:35.127-07:00\""
+}
+\end{verbatim}
+}
 
-1)  Origin. Besides production servers that controls the main array of antennas
+The camel-acs component, relies on a Java properties configuration, in which 
+specify where the logs should be sent:
+
+{\small
+\begin{verbatim}
+# allowed just one camel consumer endpoints
+# use camel.endpoint.to.<unique_name> = <camel endpoint>
+# camel.endpoint.from.acslog = acslog:?origin=${acslog.origin}
+camel.endpoint.from = acslog:?origin=${acslog.origin}&xml=${acslog.xml}&mode=${acslog.mode}
+
+camel.endpoint.to = \
+  rabbitmq://${rabbitmq.broker}:${rabbitmq.port}/${rabbitmq.exchange}? \
+  username=guest&password=guest&exchangeType=${rabbitmq.exchangetype}&routingKey=${rabbitmq.routing_key}
+#camel.endpoint.to = stream:out
+#camel.endpoint.to = mock:result
+\end{verbatim}
+}
+
+The log client is a work still under 
+development\footnote{http://mvnrepository.com/artifact/cl.alma.camel.acs/camel-acslog}, 
+as ALMA is in production state, any addition and software changes must be carefully 
+benchmarked and testedto certify that there is no critcal impact in a overall 
+performance point of view. Preliminar tests results, showd that CPU usage and 
+memory consumption is remains under control and 15 GB of data have been transferred 
+to MongoDB without a critical impact in production environments.
+
+
+\section{Message Queue and Database}
+The log client consumer running within the environment production uses a instance 
+of RabbitMQ as message broker, this message broker is configured as a topic 
+exchange named as ALMA.
+
+Logstash is in charge of mapping the log entry in order to be archived in a 
+specific Mongo collection, this mapping is based on the origin field inserted at 
+runtime, which represents the hostname where the log was produced by a ALMASW 
+instance.\\
+
+{\small
+\begin{verbatim}
+input {
+    rabbitmq {
+        host => "localhost"
+        exchange => "ALMA"
+        key => "alma.#"
+        port => 15002
+        codec => "json"
+    }
+}
+
+output {
+    mongodb {
+        codec => "json"
+        collection => "%{origin}"
+        database => "almalogs"
+        uri => "mongodb://localhost/almalogs"
+    }
+}
+\end{verbatim}
+}
+
+It is important to notice:
+
+1)  Origin: Besides production servers that controls the main array of antennas
 (which is called ``AOS''), we have many small replicas with different
 purposes like testing, commissioning, backup, etc. This field is used to
 differentiate between sources, and also to store logs in separate collections
-inside MongoDB. In AMQP terms\cite{AMQP}, the field origin act as routing key.  2)
-Date. ALMA Log message has a timestamp associated using the format
+inside MongoDB. In RabbitMQ jargon\footnote{Advanced Message Queuing Protocol}, 
+the field origin act as routing key.  
+
+2) Date: ALMA Log message has a timestamp associated using the format
 {\tt 2014-05-25T00:12:59.021 }. But searching strings over millions of logs
 is inefficient, so we also store the number of milliseconds elapsed since Unix
 Epoch (Jan 1, 1970).
@@ -211,21 +355,23 @@ Epoch (Jan 1, 1970).
 For each origin there is a separate collection. Also, to control the size of
 the database the collections are capped, that is, they acts as a FIFO queue if
 the size of the database exceeds some limit. In our initial testing we
-specified the max size parameter in 100 Gb for AOS and 10 Gb for other
-collections. For AOS it is expected to cover three days of normal operation
-what is enough for the current analyzers that we have aready running.
+specified the max size parameter in 100 GB for AOS\footnote{ALMA Observatory Site, 
+main enviroment used for science operations} and 10 GB for other
+collections. For AOS it is expected to arhive up to three days of normal operation
+what is enough for the current analyzers that are already running.
 
-Our initial database choice was ElasticSearch due its straighforward
-integration with LogStash and the power of Kibana as a graphical interface to
-do queries. ElasticSearch is a non-relational database, distributed and
-scalable based on Lucene\cite{es}. But there were two reasons to switch to MongoDB:
-ElasticSearch is oriented to faceted search that querying by applying multiple
-filters and bringing results based on scores; and second, there are other
-efforts inside ALMA that already uses MongoDB\cite{shenexploring}, then for
-synergy and standardization MongoDB was the chosen one. Initially we deployed
-MongoDB in a 32 bit machine but soon we found that it was not a smart choice.
+The initial storage choice was ElasticSearch due it is straighforward
+integration with LogStash. ElasticSearch is a is a indexer and realtime DSL searching framework, based on Apache Lucene\footnote{http://lucene.apache.org/core/}.
+
+Even though, Elasticsearch is a powerfull and fast fremework to execute DSL queries
+over several and huge amounts of data, there were three reasons to switch to MongoDB:
+
+1) Even that the time response per query is the same, MongoDB has a deterministic and accurate search results, rather that the score systems that Elasticsearch offer which there is no guarantee of search accuracy for the same query in MongoDB.
+
+2) there are other efforts inside ALMA that already uses MongoDB\cite{shenexploring}
+
 The logs has a natural timing nature, and in order to use dates in an efficient
-way MongoDB stores Date object using a  64 bit  representation.
+way MongoDB stores Date object using a 64 bit representation.
 
 \section{Log Analyzers}
 One common task of the software team is to diagnose the cause of errors
@@ -295,6 +441,7 @@ This script runs in Ariadne and querys Hypatia where MongoDB is deployed. The
 program were done general: It reads the FSM specification from an external JSON
 file. For example, the lifecycle array detector consists in this FSM
 specification:
+{\small 
 \begin{verbatim}
 {
   "StartState" : "InitArray",
@@ -315,8 +462,10 @@ specification:
 }
 
 \end{verbatim}
+}
 
 And the output in a given set of logs (near 3 millions representing near 2 hours of real operation) is as follow:
+{\small 
 \begin{verbatim}
 client-190-91-87-26:mongo joao$ ./testArray.py checkArrays.json
 Using finite state machine: checkArrays.json
@@ -351,6 +500,7 @@ Search disabled. Too much inactivity.
 - Killing CONTROL/Array005 (InitArray) because I finished my searching and I will end.
 - Killing CONTROL/Array003 (InitArray) because I finished my searching and I will end.
 \end{verbatim}
+}
 
 Extending this general behaviour is easy, but in order to see the real
 performance of the system the log client that runs inside the production
